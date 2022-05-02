@@ -51,6 +51,17 @@
           <div class="col-lg-12 order-2 order-lg-1" >
             <form action="/predict" method="POST">
             <div class="icon-box mt-5 mt-lg-0" >
+              <i class="bx bx-list-plus"></i>
+              <h4>Course</h4>
+              <select name="languages" id="lang" style="margin-bottom: 30px; border-color: gray; padding: 5px;">
+                <option value="select">Select a course</option>
+                {% for course in courses %}
+                    <option value=" {{ course['name'] }}"> {{ course['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+              
+            <div class="icon-box mt-5 mt-lg-0" >
               <i class="bx bx-receipt"></i>
               <h4>Teaching</h4>
               <div class="form-group">

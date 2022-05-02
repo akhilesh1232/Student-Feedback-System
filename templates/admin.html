@@ -186,7 +186,8 @@
 
       <nav class="nav-menu d-none d-lg-block">
         <ul class="nav-inner">
-          <li class="active"><a href="#about">Result Dashboard</a></li>
+          <li class="active"><a href="/list">Add course</a></li>
+          <li ><a href="#about">Result Dashboard</a></li>
           <li><a href="#contact">Contact</a></li>
           <li><a href="/display">Display Feedbacks</a></li>
           <li><a href="/logout">Logout</a></li>
@@ -202,6 +203,53 @@
 
     
     <!-- ======= Department Dashboard Section ======= -->
+    <div class="container" id="addcourse" style="padding-top: 20px;">
+      <div class="row">
+        <div class="col-md-6 col-sm-6">
+          <form action="/action" method="POST">    
+            <table class="table table-bordered">    
+                <tr style="background-color: #7cc576;">    
+                    <td><b><big><label> Add course </label></big></b></td>    
+                </tr>    
+                <tr>    
+                <td><input type="text" name="name" placeholder="Course Name" ></td>   
+              </tr>    
+              <tr> 
+                <td><input type="text" name="cid" placeholder="Course ID" /></td> 
+              </tr>    
+              <tr>
+                <td><input type="text" name="credit" placeholder="Course credit" /></td> 
+              </tr>    
+              <tr>
+                <td><button type="submit"> Add </button></td>   
+  
+                </tr>    
+            </form>    
+          </table>   
+        </div>
+        <div class="col-md-6 col-sm-6">
+          <table class="table table-hover">    
+            <tr id="row">    
+                <th class="status">Course Name</th>    
+                <th class="name">Course ID</th>    
+                <th class="desc">Credit</th> 
+                <th class="func1">Remove</th>   
+            </tr>    
+            {% for todo in todos %}    
+                <tr class="datas">      
+                    <td class="name">{{ todo['name'] }}</td>    
+                    <td class="desc">{{ todo['cid'] }}</td>    
+                    <td class="date">{{ todo['credit'] }}</td>    
+                    <td class="func1"><a href="./remove/name={{ todo['name'] }}">
+                      <button style="background-color: #7cc576;border-radius: 10px;">DELETE</button>
+                    </a></td>   
+                </tr>    
+            {% endfor %}    
+          </table>
+        </div>
+      </div>
+    </div>
+
     <section id="about" class="about">
       <div class="container">
 
@@ -293,6 +341,7 @@
    </div>
    <!--==================End Department Dashboard Chart====================-->
 
+   
 
  {% endblock %}
 

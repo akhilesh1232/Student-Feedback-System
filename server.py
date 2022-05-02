@@ -1,6 +1,8 @@
 import os
 import pickle
 import pandas as pd
+from pymongo import MongoClient
+from bson import ObjectId
 from flask import Flask, request, render_template,flash,redirect,session,abort,jsonify
 from datetime import datetime
 from analytics import write_to_csv_departments,write_to_csv_teachers
@@ -10,9 +12,14 @@ from teacherdashboard import get_feedback_counts
 
 app = Flask(__name__)
 
+client = MongoClient("mongodb+srv://mp4:mp4@cluster0.qooh9.mongodb.net/myFirstDatabase?retryWrites=true&w=majority") #host uri    
+db = client.mymongodb    #Select the database    
+courselist = db.courselist #Select the collection name    
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    clist = courselist.find() 
+    return render_template('index.html',courses=clist)
 
 @app.route('/login', methods=['POST'])
 def do_admin_login():
@@ -76,7 +83,8 @@ def login():
 @app.route("/logout")
 def logout():
     session['logged_in'] = False
-    return render_template('index.html')
+    clist = courselist.find() 
+    return render_template('index.html',courses=clist)
 
 
 @app.route("/predict", methods=['POST'])
@@ -175,6 +183,77 @@ def display():
     else:
         df = pd.read_csv('dataset/database.csv')
         return render_template('feedbacks.html', tables=[df.to_html(classes='data', header="true")])
+
+@app.route("/list")    
+def lists ():    
+    #Display the all Tasks    
+    clist = courselist.find()  
+    print(clist)
+    total_feedbacks, total_positive_feedbacks, total_negative_feedbacks, total_neutral_feedbacks, li = get_counts()
+    tp,tn,tneu,cp,cn,cneu,ep,en,eneu,lwp,lwn,lwneu,lfp,lfn,lfneu,ecp,ecn,ecneu = li 
+    teachers_total_feedbacks, teachers_total_positive_feedbacks, teachers_total_negative_feedbacks, teachers_total_neutral_feedbacks, teachers_li = get_feedback_counts()
+    ttp, ttn, ttneu, tcp, tcn, tcneu, tep, ten, teneu, tlwp, tlwn, tlwneu, tlfp, tlfn, tlfneu, tecp, tecn, tecneu = teachers_li
+    return render_template('admin.html',todos=clist,tf = total_feedbacks,tpf = total_positive_feedbacks,tnegf = total_negative_feedbacks, tneuf= total_neutral_feedbacks,
+                               tp=tp,tn=tn,tneu=tneu,cp=cp,cn=cn,cneu=cneu,ep=ep,en=en,eneu=eneu,
+                               lwp=lwp,lwn=lwn,lwneu=lwneu,lfp=lfp,lfn=lfn,lfneu=lfneu,ecp=ecp,
+                               ecn=ecn,ecneu=ecneu,
+                               ttf = teachers_total_feedbacks, ttpf = teachers_total_positive_feedbacks, ttnegf = teachers_total_negative_feedbacks,
+                               ttneuf = teachers_total_neutral_feedbacks,ttp = ttp, ttn = ttn, ttneu = ttneu, tcp = tcp, tcn = tcn,
+                               tcneu = tcneu, tep = tep, ten = ten, teneu = teneu,tlwp = tlwp, tlwn = tlwn,
+                               tlwneu = tlwneu, tlfp = tlfp, tlfn = tlfn, tlfneu = tlfneu, tecp = tecp,tecn = tecn, tecneu = tecneu) 
+
+@app.route("/action", methods=['POST'])    
+def action ():
+    clist = courselist.find()      
+    #Adding a course    
+    name=request.values.get("name")    
+    desc=request.values.get("cid")    
+    date=request.values.get("credit")    
+    courselist.insert_one ({ "name":name, "cid":desc, "credit":date})  
+    total_feedbacks, total_positive_feedbacks, total_negative_feedbacks, total_neutral_feedbacks, li = get_counts()
+    tp,tn,tneu,cp,cn,cneu,ep,en,eneu,lwp,lwn,lwneu,lfp,lfn,lfneu,ecp,ecn,ecneu = li
+    teachers_total_feedbacks, teachers_total_positive_feedbacks, teachers_total_negative_feedbacks, teachers_total_neutral_feedbacks, teachers_li = get_feedback_counts()
+    ttp, ttn, ttneu, tcp, tcn, tcneu, tep, ten, teneu, tlwp, tlwn, tlwneu, tlfp, tlfn, tlfneu, tecp, tecn, tecneu = teachers_li
+
+    return render_template('admin.html',todos=clist,tf = total_feedbacks,tpf = total_positive_feedbacks,tnegf = total_negative_feedbacks, tneuf= total_neutral_feedbacks,
+                            tp=tp,tn=tn,tneu=tneu,cp=cp,cn=cn,cneu=cneu,ep=ep,en=en,eneu=eneu,
+                            lwp=lwp,lwn=lwn,lwneu=lwneu,lfp=lfp,lfn=lfn,lfneu=lfneu,ecp=ecp,
+                            ecn=ecn,ecneu=ecneu,
+                            ttf = teachers_total_feedbacks, ttpf = teachers_total_positive_feedbacks, ttnegf = teachers_total_negative_feedbacks,
+                            ttneuf = teachers_total_neutral_feedbacks,ttp = ttp, ttn = ttn, ttneu = ttneu, tcp = tcp, tcn = tcn,
+                            tcneu = tcneu, tep = tep, ten = ten, teneu = teneu,tlwp = tlwp, tlwn = tlwn,
+                            tlwneu = tlwneu, tlfp = tlfp, tlfn = tlfn, tlfneu = tlfneu, tecp = tecp,tecn = tecn, tecneu = tecneu
+                            )   
+  
+@app.route("/remove/<name>", methods=['GET','POST'])    
+def remove (name): 
+    clist = courselist.find()     
+    #Deleting a Task with various references    
+    # record = [i for i in courselist.find({"name": name})]
+    # del record['_id']
+    courselist.delete_one({"name":name})
+    total_feedbacks, total_positive_feedbacks, total_negative_feedbacks, total_neutral_feedbacks, li = get_counts()
+    tp,tn,tneu,cp,cn,cneu,ep,en,eneu,lwp,lwn,lwneu,lfp,lfn,lfneu,ecp,ecn,ecneu = li 
+    teachers_total_feedbacks, teachers_total_positive_feedbacks, teachers_total_negative_feedbacks, teachers_total_neutral_feedbacks, teachers_li = get_feedback_counts()
+    ttp, ttn, ttneu, tcp, tcn, tcneu, tep, ten, teneu, tlwp, tlwn, tlwneu, tlfp, tlfn, tlfneu, tecp, tecn, tecneu = teachers_li
+    return render_template('admin.html',todos=clist,tf = total_feedbacks,tpf = total_positive_feedbacks,tnegf = total_negative_feedbacks, tneuf= total_neutral_feedbacks,
+                               tp=tp,tn=tn,tneu=tneu,cp=cp,cn=cn,cneu=cneu,ep=ep,en=en,eneu=eneu,
+                               lwp=lwp,lwn=lwn,lwneu=lwneu,lfp=lfp,lfn=lfn,lfneu=lfneu,ecp=ecp,
+                               ecn=ecn,ecneu=ecneu,
+                               ttf = teachers_total_feedbacks, ttpf = teachers_total_positive_feedbacks, ttnegf = teachers_total_negative_feedbacks,
+                               ttneuf = teachers_total_neutral_feedbacks,ttp = ttp, ttn = ttn, ttneu = ttneu, tcp = tcp, tcn = tcn,
+                               tcneu = tcneu, tep = tep, ten = ten, teneu = teneu,tlwp = tlwp, tlwn = tlwn,
+                               tlwneu = tlwneu, tlfp = tlfp, tlfn = tlfn, tlfneu = tlfneu, tecp = tecp,tecn = tecn, tecneu = tecneu)        
+  
+@app.route("/action3", methods=['POST'])    
+def action3 ():    
+    #Updating a Task with various references    
+    name=request.values.get("name")    
+    cid=request.values.get("cid")    
+    credit=request.values.get("credit")   
+    id=request.values.get("_id")    
+    courselist.update({"_id":ObjectId(id)}, {'$set':{ "name":name, "cid":cid, "credit":credit }})    
+    return redirect("/")  
 
 
 app.secret_key = os.urandom(12)
